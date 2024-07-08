@@ -1,7 +1,17 @@
+import importlib
 import markdown2
 import pathlib
 import shutil
 import jinja2
+
+
+plugins = [
+    importlib.import_module(str(x)[:-3].replace("/", "."))
+    for x in pathlib.Path("plugins").iterdir()
+    if x.suffix == ".py"
+]
+
+[plugin.init() for plugin in plugins]
 
 
 def main():
@@ -10,7 +20,8 @@ def main():
 
     sites = [x.name for x in pathlib.Path("./sites").iterdir() if x.is_dir()]
     for site in sites:
-        print(site)
+        [plugin.enter_site(site) for plugin in plugins]
+
         depl_site_dir = pathlib.Path("./deploy") / site
         shutil.rmtree(depl_site_dir, ignore_errors=True)
         depl_site_dir.mkdir()
@@ -50,7 +61,7 @@ def main():
         pathlib.Path(depl_site_dir / "index.html").write_text(index_html)
 
         for site_file in site_files:
-            if site_file.suffix not in [".txt", ".jinja2"]:
+            if site_file.suffix not in [".txt", ".jinja2", ".py"]:
                 shutil.copy(site_file, depl_site_dir)
 
 
