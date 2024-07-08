@@ -1,0 +1,22 @@
+<head>
+    <link rel="stylesheet" href="w3.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<div class="w3-container main">
+
+    <h1 class="w3-center">Oxfordfun.com</h1>
+
+    <div class="w3-container w3-margin">
+
+        {% for title, link in posts %}
+        <h2>
+            <a href="{{ link }}">{{ title }}</a>
+        </h2>
+        {% endfor %}
+
+        <hr>
+        denis.volk@gmail.com
+
+    </div>
+</div>

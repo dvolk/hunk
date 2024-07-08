@@ -1,0 +1,10 @@
+---
+title: How to use pysitegen
+author: denis.volk@gmail.com
+---
+
+Just run it:
+
+```
+python3 main.py
+```

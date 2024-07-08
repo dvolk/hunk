@@ -1,0 +1,21 @@
+<head>
+    <link rel="stylesheet" href="w3.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<div class="w3-container main">
+
+    <h1 class="w3-center">Oxfordfun.com</h1>
+
+    <div class="w3-container w3-margin">
+
+        <h2>{{ m.get("title", "you didn't set a title") }}</h2>
+
+        {{ out_md }}
+
+        <hr>
+
+        {{ m.get("author") }}
+
+    </div>
+</div>
