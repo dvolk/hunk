@@ -27,7 +27,16 @@ def main():
             if site_file.suffix != ".txt":
                 continue
             file_in = site_file.read_text()
-            out_md = markdown2.markdown(file_in, extras=["metadata"])
+            out_md = markdown2.markdown(
+                file_in,
+                extras=[
+                    "metadata",
+                    "code-friendly",
+                    "fenced-code-blocks",
+                    "footnotes",
+                    "mermaid",
+                ],
+            )
             file_out = (depl_site_dir / site_file.name).with_suffix(".html")
             file_out.write_text(post_template.render(out_md=out_md, m=out_md.metadata))
             title = out_md.metadata.get("title", file_out.name)
