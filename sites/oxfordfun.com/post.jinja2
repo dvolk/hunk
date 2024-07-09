@@ -6,11 +6,11 @@
 
 <div class="w3-container main">
 
-    <h1 class="w3-center">Oxfordfun.com</h1>
+    <h1 class="w3-center"><a href="/">Oxfordfun.com</a></h1>
 
     <div class="w3-container w3-margin">
 
-        <h2>{{ m.get("title", "you didn't set a title") }}</h2>
+        <h2><a href="{{ file_out_name }}">{{ m.get("title", "you didn't set a title") }}</a></h2>
 
         {{ out_md }}
 
@@ -22,7 +22,7 @@
 </div>
 
 <script type="module" defer>
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@9/dist/mermaid.esm.min.mjs';
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
   mermaid. Initialize({
     securityLevel: 'loose',
     startOnLoad: true
