@@ -38,7 +38,11 @@ def main():
                 ],
             )
             file_out = (depl_site_dir / site_file.name).with_suffix(".html")
-            file_out.write_text(post_template.render(out_md=out_md, m=out_md.metadata))
+            file_out.write_text(
+                post_template.render(
+                    out_md=out_md, m=out_md.metadata, file_out_name=file_out.name
+                )
+            )
             title = out_md.metadata.get("title", file_out.name)
             posts.append((title, file_out.name))
             print(file_out)
