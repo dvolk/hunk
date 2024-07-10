@@ -1,4 +1,5 @@
 <head>
+    <title>Oxfordfun.com</title>
     <link rel="stylesheet" href="w3.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -9,9 +10,9 @@
 
     <div class="w3-container w3-margin">
 
-        {% for title, link in posts %}
+        {% for out, filename in posts %}
         <h2>
-            <a href="{{ link }}">{{ title }}</a>
+            <a href="{{ filename }}">{{ out.metadata.get("title") }}</a>
         </h2>
         {% endfor %}
 

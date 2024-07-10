@@ -1,4 +1,5 @@
 <head>
+    <title>{{ out.metadata.get("title") }}</title>
     <link rel="stylesheet" href="w3.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="emacs.css">
@@ -10,16 +11,18 @@
 
     <div class="w3-container w3-margin">
 
-        <h2><a href="{{ file_out_name }}">{{ m.get("title", "you didn't set a title") }}</a></h2>
+        <h2><a href="{{ file_out_name }}">{{ out.metadata.get("title") }}</a></h2>
 
-        {{ out_md }}
+{{ out }}
 
         <hr>
 
-        {{ m.get("author") }}
+        {{ out.metadata.get("author") }}
 
     </div>
 </div>
+
+{% if out.metadata.get("uses_mermaid") == "true" %}
 
 <script type="module" defer>
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
@@ -38,3 +41,5 @@
       attributeFilter: ['data-processed'] });
   });
 </script>
+
+{% endif %}

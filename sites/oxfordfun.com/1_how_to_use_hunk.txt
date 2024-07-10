@@ -1,6 +1,7 @@
 ---
 title: How to use Hunk
 author: denis.volk@gmail.com
+uses_mermaid: true
 ---
 
 Hunk is a simple static site generator written in Python. You can use it to process multiple sites with a single invocation. A site is in `./sites/<site_name>`. Sites are processed and the deployable result is saved in `./deploy/<site_name>`.

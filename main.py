@@ -5,57 +5,49 @@ import jinja2
 
 
 def main():
-    pathlib.Path("./sites").mkdir(exist_ok=True)
-    pathlib.Path("./deploy").mkdir(exist_ok=True)
+    markdowner = markdown2.Markdown(
+        extras=[
+            "metadata",
+            "code-friendly",
+            "fenced-code-blocks",
+            "footnotes",
+            "mermaid",
+        ],
+    )
 
-    sites = [x.name for x in pathlib.Path("./sites").iterdir() if x.is_dir()]
-    for site in sites:
-        print(site)
-        depl_site_dir = pathlib.Path("./deploy") / site
-        shutil.rmtree(depl_site_dir, ignore_errors=True)
-        depl_site_dir.mkdir()
+    (sites_dir := pathlib.Path("./sites")).mkdir(exist_ok=True)
+    (deploys_dir := pathlib.Path("./deploy")).mkdir(exist_ok=True)
 
-        site_files = (pathlib.Path("./sites") / site).iterdir()
-        site_files = sorted(site_files, reverse=True)
+    for site in sites_dir.iterdir():
+        deploy_site_dir = deploys_dir / site.name
+        shutil.rmtree(deploy_site_dir, ignore_errors=True)
+        deploy_site_dir.mkdir()
 
-        post_template = jinja2.Template(
-            (pathlib.Path("./sites/") / site / "post.jinja2").read_text()
-        )
+        post_template = jinja2.Template((site / "post.jinja2").read_text())
+        index_template = jinja2.Template((site / "index.jinja2").read_text())
+
         posts = []
-
-        for site_file in site_files:
+        print(f"{site=}")
+        for site_file in sorted(site.iterdir(), reverse=True):
+            if site_file.suffix not in [".txt", ".jinja2"]:
+                shutil.copy(site_file, deploy_site_dir)
+                continue
             if site_file.suffix != ".txt":
                 continue
-            file_in = site_file.read_text()
-            out_md = markdown2.markdown(
-                file_in,
-                extras=[
-                    "metadata",
-                    "code-friendly",
-                    "fenced-code-blocks",
-                    "footnotes",
-                    "mermaid",
-                ],
-            )
-            file_out = (depl_site_dir / site_file.name).with_suffix(".html")
+            print(f"{site=}, {site_file=}")
+            out = markdowner.convert(site_file.read_text())
+            file_out = (deploy_site_dir / site_file.name).with_suffix(".html")
             file_out.write_text(
                 post_template.render(
-                    out_md=out_md, m=out_md.metadata, file_out_name=file_out.name
+                    out=out,
+                    file_out_name=file_out.name,
+                    posts=posts,
                 )
             )
-            title = out_md.metadata.get("title", file_out.name)
-            posts.append((title, file_out.name))
-            print(file_out)
+            posts.append((out, file_out.name))
 
-        index_template = jinja2.Template(
-            (pathlib.Path("./sites") / site / "index.jinja2").read_text()
-        )
         index_html = index_template.render(posts=posts)
-        pathlib.Path(depl_site_dir / "index.html").write_text(index_html)
-
-        for site_file in site_files:
-            if site_file.suffix not in [".txt", ".jinja2"]:
-                shutil.copy(site_file, depl_site_dir)
+        pathlib.Path(deploy_site_dir / "index.html").write_text(index_html)
 
 
 if __name__ == "__main__":
