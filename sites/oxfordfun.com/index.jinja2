@@ -1,23 +1,17 @@
-<head>
-    <title>Oxfordfun.com</title>
-    <link rel="stylesheet" href="w3.css">
-    <link rel="stylesheet" href="style.css">
-</head>
+{% extends 'base' %}
 
-<div class="w3-container main">
+{% block content %}
 
-    <h1 class="w3-center"><a href="/">Oxfordfun.com</a></h1>
+  {% for out, filename in posts %}
+    {% if out.metadata.get("dont-index", "false") != "true" %}
+      <h2>
+        <a href="{{ filename }}">{{ out.metadata.get("title") }}</a>
+        <!--
+            <span style="color: #999; float: right;">{{ out.metadata.get("creation_date").strftime("%Y-%m-%d") }}</span>
+            -->
+      </h2>
+      <p>{{ out.split("\n")[0] }}</p>
+    {% endif %}
+  {% endfor %}
 
-    <div class="w3-container w3-margin">
-
-        {% for out, filename in posts %}
-        <h2>
-            <a href="{{ filename }}">{{ out.metadata.get("title") }}</a>
-        </h2>
-        {% endfor %}
-
-        <hr>
-        denis.volk@gmail.com
-
-    </div>
-</div>
+{% endblock %}

@@ -1,45 +1,32 @@
-<head>
-    <title>{{ out.metadata.get("title") }}</title>
-    <link rel="stylesheet" href="w3.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="emacs.css">
-</head>
+{% extends 'base' %}
 
-<div class="w3-container main">
+{% block content %}
 
-    <h1 class="w3-center"><a href="/">Oxfordfun.com</a></h1>
+  <h2><a href="{{ file_out_name }}">{{ out.metadata.get("title") }}</a></h2>
 
-    <div class="w3-container w3-margin">
+  {{ out }}
 
-        <h2><a href="{{ file_out_name }}">{{ out.metadata.get("title") }}</a></h2>
+{% endblock %}
 
-{{ out }}
+{% block scripts %}
+  {% if out.metadata.get("uses_mermaid") == "true" %}
 
-        <hr>
-
-        {{ out.metadata.get("author") }}
-
-    </div>
-</div>
-
-{% if out.metadata.get("uses_mermaid") == "true" %}
-
-<script type="module" defer>
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid. Initialize({
-    securityLevel: 'loose',
-    startOnLoad: true
-  });
-  let observer = new MutationObserver(mutations => {
-    for(let mutation of mutations) {
+    <script type="module" defer>
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid. Initialize({
+      securityLevel: 'loose',
+      startOnLoad: true
+      });
+      let observer = new MutationObserver(mutations => {
+      for(let mutation of mutations) {
       mutation.target.style.visibility = "visible";
-    }
-  });
-  document.querySelectorAll("pre.mermaid-pre div.mermaid").forEach(item => {
-    observer.observe(item, {
+      }
+      });
+      document.querySelectorAll("pre.mermaid-pre div.mermaid").forEach(item => {
+      observer.observe(item, {
       attributes: true,
       attributeFilter: ['data-processed'] });
-  });
-</script>
-
-{% endif %}
+      });
+    </script>
+  {% endif %}
+{% endblock %}

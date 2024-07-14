@@ -4,8 +4,13 @@ set -x
 echo "generating new deployment..."
 python3 main.py
 
-echo "deleting existing deployment..."
-sudo rm -rf /var/www/html/dev.oxfordfun.com || true
+for dir in deploy/*/; do
+    dirname=$(basename $dir)
 
-echo "copying new deployment..."
-sudo cp -r deploy/dev.oxfordfun.com/ /var/www/html
+    echo "deleting existing deployment for $dir..."
+    sudo rm -rf /var/www/html/$dirname || true
+
+    echo "copying new deployment for $dir..."
+    sudo cp -r $dir /var/www/html
+
+done;

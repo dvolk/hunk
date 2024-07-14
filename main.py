@@ -1,7 +1,8 @@
-import markdown2
 import pathlib
 import shutil
+import datetime
 import jinja2
+import markdown2
 
 
 def main():
@@ -23,12 +24,19 @@ def main():
         shutil.rmtree(deploy_site_dir, ignore_errors=True)
         deploy_site_dir.mkdir()
 
-        post_template = jinja2.Template((site / "post.jinja2").read_text())
-        index_template = jinja2.Template((site / "index.jinja2").read_text())
+        env = jinja2.Environment(
+            loader=jinja2.DictLoader(
+                {
+                    "base": (site / "base.jinja2").read_text(),
+                    "index": (site / "index.jinja2").read_text(),
+                    "post": (site / "post.jinja2").read_text(),
+                }
+            )
+        )
 
         posts = []
         print(f"{site=}")
-        for site_file in sorted(site.iterdir(), reverse=True):
+        for site_file in site.iterdir():
             if site_file.suffix not in [".txt", ".jinja2"]:
                 shutil.copy(site_file, deploy_site_dir)
                 continue
@@ -36,9 +44,13 @@ def main():
                 continue
             print(f"{site=}, {site_file=}")
             out = markdowner.convert(site_file.read_text())
+            out.metadata["creation_date"] = datetime.datetime.strptime(
+                out.metadata["creation_date"], "%Y-%m-%d"
+            )
             file_out = (deploy_site_dir / site_file.name).with_suffix(".html")
             file_out.write_text(
-                post_template.render(
+                env.get_template("post").render(
+                    title=out.metadata.get("title"),
                     out=out,
                     file_out_name=file_out.name,
                     posts=posts,
@@ -46,7 +58,14 @@ def main():
             )
             posts.append((out, file_out.name))
 
-        index_html = index_template.render(posts=posts)
+        posts = sorted(
+            posts, key=lambda x: x[0].metadata.get("creation_date"), reverse=True
+        )
+
+        index_html = env.get_template("index").render(
+            title=site.name.capitalize(),
+            posts=posts,
+        )
         pathlib.Path(deploy_site_dir / "index.html").write_text(index_html)
 
 

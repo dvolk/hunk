@@ -1,0 +1,66 @@
+---
+title: Thoughts on Nim
+author: denis.volk@gmail.com
+creation_date: 2020-10-31
+---
+
+When I first heard of the Nim programming language (then called Nimrod), I was very excited. It promised the combination of Python's ease of use, and C's performance. I played around with it for a while, but didn't use it seriously.
+
+Forward a couple of years. At work, we were mostly using Python, and had no need for performance, except in one case where an application was developed that worked well initially, but was straining as the data it processed only grew. Occasionally there were rumblings from management about how we're going to handle this, especially as they were expecting increased growth.
+
+We had the author of the software (who remained an external collaborator) explain the core of the application to us, and I started playing around with re-implementing it.
+
+## Python isn't so slow
+
+I decided to prototype it in Python. The critical part of the application used set operations. Although we usually think of Python as a slow language - and it is slow - it turns out that sets in Python are fast. Indeed, from what I tested, they were faster than C++ `std::set` or Nim `IntSet`.
+
+Disappointed that I couldn't get better performance by just switching to a different language, I started playing around with set operations, trying to make them faster. During this I discovered that we didn't really need to do the full operation and could exit early based on some threshold.
+
+Set operations in Python are fast because they're written in clever C. Re-implementing them in pure Python to add the early exit logic would not work.
+
+I decided to try Nim.
+
+## Re-learning Nim
+
+I hadn't used Nim in years now. It took some time to get used to it again. Although Nim's syntax looks a lot like Python's, it is quite different: Nim's variables have static types. This means that unlike in Python, the following doesn't work:
+
+```nim
+var a = "hello"
+a = 3
+```
+
+nor can you put different types in a collection:
+
+```nim
+let xs = ["hello", 7, [3.14]]
+```
+
+This is an old debate. My thoughts are that I strongly prefer static types when reading other people's software, and slightly prefer dynamic types when writing my own software.
+
+## Using Nim
+
+I was a bit apprehensive about deviating from the norm by using Nim at work. Even if the project was a success, I wasn't sure that I was doing anyone a favor if I were to leave and they had to hire someone new to maintain it given that few people know Nim. I was eager to use it though, and the application was small and did a very specific and well-defined task, so it's unlikely that they would have to change it much in the future.
+
+I rewrote the Python prototype in Nim and started working on the set optimisation. I took C++ `std::set` operations, rewrote them in Nim with the early exit logic, trying vaguely to keep in mind things like cache coherency when coming up with the data types and algortihms.
+
+This turned out to be a success: the runtime for typical queries was around 100 times faster than the production Python version. The collaborator pointed out that this was so fast that we could get rid of a cache and further reduce memory use, but more importantly, make the program even simpler!
+
+## Bugs
+
+I did encounter some bugs. One of them was in one of the collections in the Nim standard library. This was reported and fixed a couple of days later.
+
+The collaborator seemed eager to continue using the Python version by incorporating my program and using Python for storage and some extra logic. I agreed with this and tried to use nimpy, which allows one to write Nim and load it as a Python module.
+
+This worked well at first, but it would randomly crash when we tried to use the module in a Python Flask application. To work around this, I wrote a Python module that would start the Nim program and communicate with it through http.
+
+Although these bugs were a bit stressful, overall I think Nim is quite stable, and we haven't encountered any other problems since.
+
+## Performance regression
+
+Newer versions of Nim offer an interesting alternative memory management strategy called ARC, which can be enabled with `--gc:arc`. When I tested my program with this, I found that it performed 50 times slower than with the default gc! Since memory management in Nim is somewhat magical, I decided to just leave it alone and not use `--gc:arc`. After gaining more experience with the Nim memory model, I tried to fix it and it turned out that changing some big Tables into ref Tables fixed the issue. This made the performance and memory use the same as with the default gc.
+
+## Conclusion
+
+The program is used by a public health body to perform critical analysis. We are also using it in two other projects in our group.
+
+Overall using Nim turned out to be a good idea. Nim's static type system seems to make prototyping slightly slower, but it enables better performance and it is sometimes easier to reason about. Nim code is very pleasant to read and write, unlike, e.g. C++. Memory handling in Nim is still seems somewhat mysterious to me however and I don't feel as in control of it as in C++.
