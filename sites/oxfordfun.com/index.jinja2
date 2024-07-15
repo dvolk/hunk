@@ -4,11 +4,9 @@
 
   {% for out, filename in posts %}
     {% if out.metadata.get("dont-index", "false") != "true" %}
+      {% set date = out.metadata.get("creation_date").strftime("%Y") %}
       <h2>
-        <a href="{{ filename }}">{{ out.metadata.get("title") }}</a>
-        <!--
-            <span style="color: #999; float: right;">{{ out.metadata.get("creation_date").strftime("%Y-%m-%d") }}</span>
-            -->
+        <a class="title" href="{{ filename }}">{{ out.metadata.get("title") }} ({{ date }})</a>
       </h2>
       <p>{{ out.split("\n")[0] }}</p>
     {% endif %}

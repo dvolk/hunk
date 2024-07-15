@@ -13,6 +13,7 @@ def main():
             "fenced-code-blocks",
             "footnotes",
             "mermaid",
+            "tables",
         ],
     )
 
