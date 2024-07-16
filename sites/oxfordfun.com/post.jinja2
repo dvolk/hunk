@@ -3,7 +3,7 @@
 {% block content %}
 
   {% set date = out.metadata.get("creation_date").strftime("%Y") %}
-  <h2><a class="title" href="{{ file_out_name }}">{{ icon('box') }} {{ out.metadata.get("title") }} ({{ date }})</a></h2>
+  <h2><a class="title" href="{{ file_out_name }}">{{ out.metadata.get("title") }} ({{ date }})</a></h2>
 
   {{ out }}
 
