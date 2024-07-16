@@ -1,0 +1,682 @@
+---
+title: A Quick Look at Haskell
+author: denis.volk@gmail.com
+creation_date: 2014-05-01
+---
+
+We take a look at the elements of Haskell, from `string`s to `IO string`s.
+
+## Environment
+
+Haskell is defined in the [Haskell Report](https://www.haskell.org/onlinereport/haskell2010/).
+
+The most used compiler is [GHC](https://www.haskell.org/ghc/download) (debian package `ghc`, `ghc-doc`).
+
+Haskell projects are typically built and packaged using [Cabal](https://www.haskell.org/cabal/) (`cabal-install`).
+
+There is an online package repository called [Hackage](https://hackage.haskell.org/).
+
+## Types
+
+```haskell
+"Hello " ++ " World"
+```
+
+is an *expression*. Its *value* is
+
+```haskell
+"Hello World"
+```
+
+Its *type* is
+
+```haskell
+String
+```
+
+Types are declared using the reserved operator `::` (read as "has type")
+
+```haskell
+xs = "Hello World" :: String
+```
+
+Here `xs` is a *variable*.
+
+Variables and types names are case sensitive. Variable names begin with a lowercase character and type names begin with an uppercase character.
+
+Type declarations are optional. In their absence, Haskell will infer the types. If it can't, you'll be asked to provide them.
+
+## Functions
+
+Defining and calling functions is very simple
+
+```haskell
+addTwoLengths :: String -> String -> Int
+addTwoLengths xs ys = length xs + length ys
+```
+
+A function can be defined for different arguments (the order in which the definitions are written is important)
+
+```haskell
+fac :: Int -> Int
+fac 1 = 1
+fac n = n * fac (n - 1)
+```
+
+### Let
+
+We can define local variables with `let` ... `in` ...
+
+```haskell
+squaredDistance :: Int -> Int -> Int -> Int -> Int
+squaredDistance x1 y1 x2 y2 =
+  let dx = x1 - x2
+      dy = y1 - y2
+  in dx ^ 2 + dy ^ 2
+```
+
+### Partial application
+
+A function can be partially applied, creating a new function
+
+```haskell
+sdFrom11 :: Int -> Int -> Int
+sdFrom11 = squaredDistance 1 1
+
+sdFrom11 4 4 :: Int
+```
+
+### Composition
+
+Two functions can be composed, creating a new function
+
+```haskell
+f = fac . length :: String -> Int
+```
+
+is the same as
+
+```haskell
+f n = fac (length n) :: String -> Int
+```
+
+### Anonymous functions
+
+We can define an anonymous function (*lambda*) with `\args -> body`
+
+```haskell
+doubleLength = (\n -> n * 2) . length
+```
+
+### Higher-order functions
+
+It's possible to pass functions as arguments to functions and have functions return functions.
+
+For example, `map` transforms a list by applying a function to every element.
+
+```haskell
+map (\n -> n + 1) [1,2,3]
+```
+
+```haskell
+         /-<-<-<-<-<-\
+         |           |
+         v           |
+
+ map :: (a -> b) -> [a] -> [b]
+        ^^^^^^^^    ^^^    ^^^--- [2,3,4]
+         |           |
+         |           \--- [1,2,3]
+      \n -> n + 1
+```
+
+## Algebraic Data Types
+### Sum types
+
+The simplest example of a sum type is
+
+```haskell
+data Bool = True
+          | False
+```
+
+Bool value is either =True= or =False=.
+
+```haskell
+x = True :: Bool
+```
+
+### Product types
+A product type is defined as
+
+```haskell
+data Person = Person String Int
+     ^^^^^^   ^^^^^^ ^^^^^^ ^^^
+        |        |      |     |
+        |        |      \-----\----- data constructor parameters
+        |        |
+        |        \-- data constructor
+        |
+        \-- type constructor
+```
+
+The `Person` on the left side is the *type constructor*. The `Person` on
+the right side  is the *data constructor*. These don't  have to have the
+same  name,  but they  often  do,  to  the  chagrin of  Haskell  newbies
+everywhere.
+
+To create a value of type `Person`, use the `Person` data constructor:
+
+```haskell
+p :: Person
+p = Person "Morty" 22
+```
+
+### Named data constructor parameters
+
+Data constructor parameters can be named
+
+```haskell
+data Person = Person
+  { name :: String
+  , age  :: Int
+  }
+```
+
+then an alternative way to create a `Person` is to write
+
+```haskell
+p = Person { name = "Morthy"
+           , age  = 22
+           }
+```
+
+### Type constructor parameters
+
+Type constructors can have parameters
+
+```haskell
+data Maybe a = Nothing
+             | Just a
+```
+
+where =a= is a type.
+
+```haskell
+greeting = Just "Hello" :: Maybe String
+name     = Nothing      :: Maybe String
+```
+
+### Compound example
+
+For example, a ship may or may not have a captain
+
+```haskell
+data Ship = Ship
+  { shipName :: String
+  , captain  :: Maybe Person
+  }
+```
+
+We can make a Ship with one
+
+```haskell
+s1 = Ship { shipName = "Queen Elizabeth 2"
+         , captain = Just ( Person "William Cooper" 50 )
+         }
+```
+
+And one without
+
+```haskell
+s2 = Ship { shipName = "Dinghy"
+         , captain = Nothing }
+```
+
+### Data constructor parameter namespace
+
+In the above example, `Person` had  a `name` parameter, but `Ship` had a
+`shipName` parameter. This is  because data constructor parameters share
+one namespace and  cannot be reused in different data  types. And that's
+because...
+
+### Data constructor named parameters are functions
+
+These are automatically generated for you
+
+```haskell
+name :: Person -> String
+age  :: Person -> Int
+
+shipName :: Ship -> Maybe String
+captain  :: Ship -> Maybe Person
+```
+
+Different functions (in the same module) can't have the same name.
+
+### Updating values with named constructor parameters
+
+We can take an existing data  type with named constructor parameters and
+update it. For example, to remove the captain from `s1` above
+
+```haskell
+s3 = s1 { captain = Nothing }
+```
+
+This creates a new copy of `s1`, `s3`, changing the parameters supplied.
+
+### Recursive data types
+
+data type definitions can be recursive
+
+```haskell
+data List a = Nil
+            | Append a (List a)
+```
+
+a `List` of `a` is then either `Nil` (empty list) or an element of type
+=a= appended to a `List` of type `a`.
+
+```haskell
+l :: List Int
+l = Append 1 (Append 2 (Append 3 (Append 4 Nil)))
+```
+## Lists
+
+Lists are a  built-in recursive data type. They're  constructed with the
+cons operator "`:`"
+
+```haskell
+1 : ( 2 : ( 3 : ( 4 : [] )))
+```
+
+Haskell provides an easier way to write the above
+
+```haskell
+[1, 2, 3, 4] :: [Int]
+```
+
+A `String` is a list of `Char`
+
+```haskell
+s = "Hello World" :: [Char]
+```
+## Tuples
+
+A tuple is a fixed size container. Unlike lists, a tuple may contain
+different types
+
+for example
+
+```haskell
+("Proxima Centauri", 3, 4, 5) :: (String, Int, Int, Int)
+```
+## If and case
+
+`if` ... `then` ... `else` ... is an expression. The `else` is mandatory (what value would the expression evaluate to if it wasn't?)
+
+```haskell
+describeIntSign :: Int -> String
+describeIntSign n =
+  if n > 0
+    then "positive"
+    else "negative"
+```
+
+`case` ... `of` ...  is also an expression, but a bit more general than =if=.
+
+```haskell
+describeInt :: Int -> String
+describeInt n =
+  case n of
+    0 -> "zero"
+    1 -> "one"
+    2 -> "two"
+    _ -> "I don't know that number"
+```
+
+## Deconstructing values
+
+Data type values can be  deconstructed with pattern matching in function
+arguments
+
+```haskell
+data Person = Person
+  { name :: Maybe String
+  , age  :: Int
+  }
+
+nonsense :: Person -> Int
+nonsense (Person  Nothing a) = a
+nonsense (Person (Just n) a) = length n + a
+```
+
+here  `n`  and `a`  will  be  locally bound  to  `name`  (when it isn't
+`Nothing`) and `age` of the person.
+
+We can also pattern match in case expressions
+
+```haskell
+case p of
+  Person  Nothing a -> "This person doesn't have a name"
+  Person (Just n) a -> "This person's name is " ++ n
+```
+
+and let expressions
+
+```haskell
+let (Person _ a) = p in a + 1
+```
+
+use `_` to indicate that you don't care about a parameter.
+
+Lists and tuples can also be pattern matched.
+
+```haskell
+headIntList :: [Int] -> Int
+head (first:rest) = first
+      ^^^^^^^^^^
+          |
+ recall, a list is an element appended (:'ed) to the rest of the list
+
+swapPair :: (Int, Int) -> (Int, Int)
+swapPair (x, y) = (y, x)
+```
+
+## Parametric polymorphism
+
+Defining a new function for each type of list like above would be silly.
+Haskell allows us to write generic/polymorphic functions.
+
+```haskell
+         ┌-- type variables, a is any type
+         |
+         ├-----┐
+         |     |
+         v     v
+head :: [a] -> a
+head (first:rest) = first
+
+swap :: (a, b) -> (b, a)
+swap (a, b) = (b, a)
+```
+
+type variables are always lowercase.
+
+## Typeclasses
+
+Typeclasses allow you to overload functions
+
+```haskell
+class Eq a where
+  (==) :: a -> a -> Bool
+```
+
+types are instances of typeclasses
+
+```haskell
+instance Eq Char where
+  (==) = ...
+```
+
+### Standard typeclasses
+
+You can make your own, but Haskell already defines many typeclasses
+
+| Typeclass  | Functions                                                                                                                                                                                      |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Eq         | `(==)`, `(/=)`                                                                                                                                                                                 |
+| Ord        | `(<)`, `(<=)`, `(>=)`, `(>)`, `max`, `min`                                                                                                                                                     |
+| Enum       | `succ`, `pred`, `toEnum`, `fromEnum`, `enumFrom`, `enumFromThen`, `enumFromTo`, `enumFromThenTo`                                                                                               |
+| Num        | `(+)`, `(-)`, `(⋆)`, `negate`, `abs`, `signum`, `fromInteger`                                                                                                                                  |
+| Real       | `toRational`                                                                                                                                                                                   |
+| Integral   | `quot`, `rem`, `div`, `mod`, `quotRem`, `divMod`, `toInteger`                                                                                                                                  |
+| Fractional | `(/)`, `recip`, `fromRational`                                                                                                                                                                 |
+| Floating   | `pi`, `exp`, `log`, `sqrt`, `(⋆⋆)`, `logBase`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `asinh`, `atanh`                                                           |
+| RealFrac   | `properFraction`, `truncate`, `round`, `ceiling`, `floor`                                                                                                                                      |
+| RealFloat  | `floatRadix`, `floatDigits`, `floatRange`, `decodeFloat`, `encodeFloat`, `exponent`, `significand`, `scaleFloat`, `isNaN`, `isInfinite`, `isDenormalized`, `isIEEE`, `isNegativeZero`, `atan2` |
+| Monad      | `(>>=)`, `(>>)`, `return`, `fail`                                                                                                                                                              |
+| Functor    | `fmap`                                                                                                                                                                                         |
+
+### Automatic deriving
+
+Haskell can automatically derive some  typeclass instances for your data
+types (restrictions may apply). E.g.
+
+```haskell
+data Person = Person String Int
+  deriving Eq
+
+p1 = Person "Rick" 50
+
+p2 = Person "Morty" 12
+
+p1 == p2 :: Bool
+```
+
+### Show & Read
+
+`Show` and `Read` are two important typeclasses. They implement `show`
+and `read` and can be automatically derived.
+
+```haskell
+show :: Show a => a -> String
+read :: Read a => String -> a
+```
+
+That is,  for types with a  `Show` instance, `show` will  turn the value
+into a `String`. For types with  a `Read` instance, `read` will turn the
+`String` into the value of type `a`
+
+```haskell
+data Person = Person String Int
+  deriving (Eq, Show, Read)
+
+p1 = read "Person \"Rick\" 50" :: Person
+
+show p1 :: String
+```
+
+You should not use `read` unless you know that the string is valid. An
+invalid string will cause a runtime error.
+
+for inputs that may fail to parse, use `readMaybe`
+
+```haskell
+Text.Read.readMaybe :: Read a => String -> Maybe a
+```
+
+## IO
+### Example: Echoing input line
+
+Understanding  how IO  works  in  Haskell requires  an  unusual amount  of
+background knowledge compared to  other programming languages. It's best
+to begin with an example.
+
+Haskell executables begin with the main function.
+
+```haskell
+main :: IO ()
+main = getLine >>= putStrLn
+```
+
+The types of these functions (often called *actions*) are
+
+```haskell
+getLine  :: IO String
+putStrLn :: String -> IO ()
+```
+
+`(>>=)` chains them together
+
+```haskell
+(>>=) :: IO a -> (a -> IO b) -> IO b
+         ^^^^    ^^^^^^^^^^^    ^^^^
+          |          |          |
+getLine --┘          |          |
+                     |          └-- main
+         putStrLn ---┘
+```
+
+### Example: Guess the number
+
+What if  we want to chain  together two `IO a`  actions like `putStrLn`?
+Replace the second one with a lambda that ignores its argument.
+
+```haskell
+putStrLn "Hello"    >>=    \_ -> putStrLn "World"
+^^^^^^^^^^^^^^^^           ^^^^^^^^^^^^^^^^^^^^^^
+       |                              |
+      IO a                         a -> IO b
+```
+
+We can make a "guess the number" game with these functions (and `randomRIO`)
+
+```haskell
+import Text.Read
+import System.Random
+
+guessGame :: Int -> IO ()
+guessGame n =
+  putStrLn "Guess the number (1-10): " >>= \_ ->
+  getLine >>= \input ->
+  case readMaybe input of
+    Nothing    -> putStrLn "not sure what you just typed!" >>= \_ ->
+                  guessGame n
+    Just guess ->
+      if guess == n
+        then putStrLn "You guessed it!"
+        else putStrLn "Wrong!" >>= \_ ->
+             guessGame n
+
+main :: IO ()
+main = randomIO (1,10) >>= guessGame
+```
+
+### Do notation
+
+Haskell provides a nicer notation of composing IO actions with `do` notation
+
+```haskell
+import Text.Read
+import System.Random
+
+guessGame :: Int -> IO ()
+guessGame n = do
+  putStrLn "Guess the number (1-10): "
+  input <- getLine
+  case readMaybe input of
+    Nothing -> do putStrLn "not sure what you just typed!"
+                  guessGame n
+    Just guess ->
+      if guess == n
+        then putStrLn "You guessed it!"
+        else do putStrLn "Wrong!"
+                guessGame n
+
+main :: IO ()
+main = do
+  n <- randomRIO (1,10)
+  guessGame n
+```
+
+### Looping
+
+We can loop with the monadic map `mapM_`
+
+```haskell
+                         /-<-<-<-<-<-<-<-\
+                         |               |
+                         v               |
+
+           map  M  _ :: (a -> IO ()) -> [a] -> IO ()
+
+                ^  ^    ^^^^^^^^^^^^    ^^^    ^^^^^
+                |  |        |            |       |
+                |  |        \-- action   |  no results returned
+                |  |            to run   |
+works on Monads /  |                     |
+                   |                     \-- list to run it on
+  discards results /
+
+^^^^^^^^^^^^^^^^^^^^^
+  naming convention
+```
+
+For example, to print the ASCII value of `Char` from A to Z
+
+```haskell
+main = mapM_ (print . fromEnum) ['A'..'Z']
+```
+
+where
+
+```haskell
+print    :: Show a => a -> IO ()
+fromEnum :: Enum a => a -> Int
+```
+
+This  type of  looping  is  more limited  than  `for  (;;)` from  C-like
+languages - you  cannot `break` out of  it for one. Instead  of having a
+few general control  structures, Haskell has many  specialized ones, and
+the ability to easily write your own.
+
+### Concurrent IO
+
+Haskell comes with  light concurrency primitives. So light  in fact that
+it might be better to use one  of the abstractions built on top of them,
+like the `async` package:
+
+```haskell
+async :: IO a   ->   IO (Async a)
+
+         ^^^^        ^^^^^^^^^^^^
+          |               |
+ computation to run       v
+                          |
+                          v
+                          |
+            /--<-<-<-<-<--/
+            v
+            |
+            v
+            |
+         vvvvvvv
+
+wait  :: Async a   ->   IO a
+
+                        ^^^^
+                         |
+               result of computation
+```
+
+For example  we can spawn  ten threads that do  some work, wait  for the
+results and then print them.
+
+```haskell
+import Control.Concurrent
+import Control.Concurrent.Async
+
+main = do
+  let worker n = do
+        threadDelay (10^6)
+        return (n * 2)
+
+  ts <- mapM (async . worker) [1..10]
+
+  results <- mapM wait ts
+
+  mapM_ print results
+```
+
+Note that `return` is  a function with type `a -> IO a`.  It has no flow
+control meaning  like in many  languages. It's simply turning  the `Int`
+into an `IO Int`.
+
+## More
+
+- [https://www.haskell.org/tutorial/](A Gentle Introduction to Haskell, Version 98 (slightly misleading title))
+- [https://www.haskell.org/ghc/docs/latest/html/libraries/index.html](Documentation for the libraries that come with GHC)
+- [http://book.realworldhaskell.org/](Real World Haskell)
+- [http://community.haskell.org/~simonmar/pcph/](Parallel and Concurrent Programming in Haskell)
+- [https://en.wikibooks.org/wiki/Haskell](Haskell Wikibook)
